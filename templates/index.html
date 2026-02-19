@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart AI Translator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app">
+
+    <header>
+        <h1>🌍 Smart AI Translator 🌍</h1>
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </header>
+
+    <form method="POST" class="card">
+        <textarea id="text" name="text" placeholder="Type or use 🎤 to speak..." required>{{ original_text }}</textarea>
+        <button type="button" class="secondary" onclick="startListening()">🎤 Speak Input</button>
+
+        <div class="controls">
+            <select name="source">
+                {% for lang in languages %}
+                <option value="{{ lang }}" {% if lang == selected_source %}selected{% endif %}>{{ lang }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit" class="primary">✨ Translate</button>
+
+            <select name="target">
+                {% for lang in languages %}
+                <option value="{{ lang }}" {% if lang == selected_target %}selected{% endif %}>{{ lang }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    {% if translated %}
+    <div class="output-section card">
+        <div class="output-header">
+            <h3>Translated Text</h3>
+            <div class="actions">
+                <button type="button" onclick="speakText()" id="speakBtn">🔊</button>
+                <button type="button" onclick="copyText()">📋</button>
+            </div>
+        </div>
+
+        <p id="translatedText">{{ translated }}</p>
+
+        <form method="POST" action="/download_pdf">
+            <input type="hidden" name="translated_text" value="{{ translated }}">
+            <button type="submit" class="download-btn">📄 Download PDF</button>
+        </form>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function startListening() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        alert("Voice input only works in Google Chrome on HTTPS or localhost.");
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+
+    const langMap = {
+        "English":"en-US",
+        "Hindi":"hi-IN",
+        "Gujarati":"gu-IN",
+        "Marathi":"mr-IN",
+        "Tamil":"ta-IN",
+        "French":"fr-FR",
+        "German":"de-DE",
+        "Spanish":"es-ES",
+        "Portuguese":"pt-PT"
+    };
+
+    let selectedSource = document.querySelector("select[name='source']").value;
+    recognition.lang = langMap[selectedSource] || "en-US";
+
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.start();
+
+    recognition.onresult = (event) => {
+        document.getElementById("text").value = event.results[0][0].transcript;
+    };
+
+    recognition.onerror = (event) => {
+        alert("Mic error: " + event.error);
+    };
+}
+
+
+function copyText() {
+    const text = document.getElementById("translatedText").innerText;
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Copied to clipboard!");
+    }).catch(() => {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+        alert("Copied!");
+    });
+}
+
+function convertSymbols(text) {
+    const map = {
+        "🍕":" pizza ","🍔":" burger ","🍎":" apple ","🍰":" cake ","☕":" coffee ",
+        "❤":" love ","❤️":" love ","😊":" smile ","😂":" laughing ","🔥":" fire ",
+        "⭐":" star ","🎉":" celebration ","🚀":" rocket ","📚":" books ","🎵":" music ",
+        ".":" dot ",",":" comma ","!":" exclamation mark ","?":" question mark ",
+        "@":" at ","#":" hashtag ","&":" and ","%":" percent ","$":" dollar ",
+        "+":" plus ","=":" equals ","/":" slash ","\\":" backslash ",
+        "-":" dash ","_":" underscore ","(":" open bracket ",")":" close bracket ",
+        "{":" open curly bracket ","}":" close curly bracket ",
+        "[":" open square bracket ","]":" close square bracket ",
+        "<":" less than ",">":" greater than ",
+        ":":" colon ",";":" semicolon ",
+        "\"":" double quote ","'":" apostrophe ",
+        "*":" star ","^":" caret ","~":" tilde ","|":" vertical bar "
+    };
+
+    for (let s in map) text = text.split(s).join(map[s]);
+    return text;
+}
+
+let voices = [];
+let isSpeaking = false;
+
+function loadVoices() {
+    voices = speechSynthesis.getVoices();
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function getBestVoice(langCode) {
+    if (!voices.length) return null;
+
+    let voice = voices.find(v => v.lang.toLowerCase() === langCode.toLowerCase());
+    if (!voice) voice = voices.find(v => v.lang.toLowerCase().startsWith(langCode.split('-')[0].toLowerCase()));
+    if (!voice) voice = voices.find(v => v.lang.startsWith("en"));
+
+    return voice;
+}
+
+function speakText() {
+    const btn = document.getElementById("speakBtn");
+
+    if (isSpeaking) {
+        speechSynthesis.cancel();
+        isSpeaking = false;
+        btn.innerText = "🔊";
+        return;
+    }
+
+    let text = document.getElementById("translatedText").innerText;
+    if (!text.trim()) return;
+
+    text = convertSymbols(text);
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    const langMap = {
+        "English":"en-US",
+        "Hindi":"hi-IN",
+        "Gujarati":"gu-IN",
+        "Marathi":"mr-IN",
+        "Tamil":"ta-IN",
+        "French":"fr-FR",
+        "German":"de-DE",
+        "Spanish":"es-ES",
+        "Portuguese":"pt-PT"
+    };
+
+    const selectedLang = document.querySelector("select[name='target']").value;
+    utterance.lang = langMap[selectedLang] || "en-US";
+
+    const bestVoice = getBestVoice(utterance.lang);
+    if (bestVoice) utterance.voice = bestVoice;
+
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => { isSpeaking = true; btn.innerText = "⏹"; };
+    utterance.onend = () => { isSpeaking = false; btn.innerText = "🔊"; };
+
+    speechSynthesis.speak(utterance);
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+
+    const btn = document.querySelector(".theme-toggle");
+    if (document.body.classList.contains("dark")) {
+        btn.innerText = "☀";
+        localStorage.setItem("theme", "dark");
+    } else {
+        btn.innerText = "🌙";
+        localStorage.setItem("theme", "light");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const savedTheme = localStorage.getItem("theme");
+    const btn = document.querySelector(".theme-toggle");
+
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+        if (btn) btn.innerText = "☀";
+    } else {
+        if (btn) btn.innerText = "🌙";
+    }
+});
+</script>
+
+
+
+</body>
+</html>

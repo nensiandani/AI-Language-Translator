@@ -1,0 +1,107 @@
+:root {
+    --bg: linear-gradient(135deg, #667eea, #764ba2);
+    --card-bg: rgba(255, 255, 255, 0.15);
+    --text: #ffffff;
+    --accent: #ffcc70;
+    --blur: blur(18px);
+}
+
+body.dark {
+    --bg: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    --card-bg: rgba(0, 0, 0, 0.35);
+    --text: #f1f5f9;
+    --accent: #38bdf8;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.app {
+    width: 95%;
+    max-width: 900px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card {
+    backdrop-filter: var(--blur);
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    margin-bottom: 15px;
+}
+
+textarea {
+    width: 97%;
+    height: 120px;
+    border-radius: 12px;
+    border: none;
+    padding: 12px;
+    font-size: 15px;
+    resize: none;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-top: 15px;
+}
+
+select {
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+}
+
+button {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+.primary { background: var(--accent); color: #000; }
+.secondary { margin-top: 8px; background: rgba(255,255,255,0.2); color: var(--text); }
+
+.output-section { background: rgba(0,0,0,0.2); }
+
+.output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.actions button {
+    margin-left: 5px;
+    background: rgba(255,255,255,0.2);
+    color: var(--text);
+}
+
+.download-btn {
+    margin-top: 10px;
+    width: 100%;
+    background: #22c55e;
+    color: white;
+}
